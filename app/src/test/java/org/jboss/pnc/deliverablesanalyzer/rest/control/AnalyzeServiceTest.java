@@ -42,6 +42,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
@@ -149,14 +150,20 @@ class AnalyzeServiceTest {
     }
 
     @Test
-    void testTryCancelLocalJobSuccess() {
+    void testTryCancelLocalJobSuccess() throws InterruptedException {
         // Given
         AnalyzePayload payload = AnalyzePayload.builder()
                 .operationId("local-cancel-id")
                 .urls(List.of("http://url"))
                 .build();
 
+        doAnswer(invocation -> {
+            Thread.sleep(5000); // Hang for 5 seconds
+            return null;
+        }).when(orchestrator).analyze(anyString(), anySet(), any());
+
         analyzeService.analyze(payload);
+        Thread.sleep(200);
 
         // When - simulate receiving the event from Infinispan listener
         boolean cancelled = analyzeService.tryCancelLocalJob("local-cancel-id");
